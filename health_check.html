@@ -1,0 +1,1217 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>微柔 · 智能体质检测</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700;900&family=LXGW+WenKai+TC:wght@400;700&display=swap');
+        :root {
+            --palace-red: #A50020;
+            --palace-red-deep: #6B0015;
+            --palace-gold: #D4AF37;
+            --palace-gold-bright: #FFD700;
+            --palace-dark: #0D0D0D;
+            --palace-cream: #FDF8F0;
+            --palace-brown: #2D1810;
+            --text-dark: #1A0A05;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'LXGW WenKai TC', 'Noto Serif SC', '华文楷体', 'STKaiti', 'SimSun', serif;
+            background: linear-gradient(135deg, var(--palace-cream) 0%, #F5EDE0 50%, #EDE4D3 100%);
+            min-height: 100vh;
+            position: relative;
+            color: var(--text-dark);
+            overflow-x: hidden;
+        }
+        /* 节气背景装饰 */
+        .season-bg {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+        .season-bg::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: radial-gradient(ellipse at top right, rgba(165,0,32,0.04) 0%, transparent 40%),
+                        radial-gradient(ellipse at bottom left, rgba(212,175,55,0.06) 0%, transparent 40%);
+        }
+        /* 梅花装饰 */
+        .plum-blossom {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            opacity: 0.15;
+        }
+        .plum-blossom::before {
+            content: '❀';
+            font-size: 28px;
+            color: var(--palace-red);
+        }
+        .plum-blossom:nth-child(1) { top: 8%; left: 3%; animation: sway 8s ease-in-out infinite; }
+        .plum-blossom:nth-child(2) { top: 25%; right: 5%; animation: sway 10s ease-in-out infinite 1s; }
+        .plum-blossom:nth-child(3) { top: 45%; left: 2%; animation: sway 9s ease-in-out infinite 2s; }
+        .plum-blossom:nth-child(4) { top: 70%; right: 3%; animation: sway 11s ease-in-out infinite 0.5s; }
+        .plum-blossom:nth-child(5) { bottom: 15%; left: 5%; animation: sway 8s ease-in-out infinite 1.5s; }
+        /* 竹叶装饰 */
+        .bamboo-leaf {
+            position: absolute;
+            font-size: 40px;
+            opacity: 0.08;
+            color: #2E7D32;
+        }
+        .bamboo-leaf:nth-child(6) { top: 15%; right: 8%; transform: rotate(30deg); }
+        .bamboo-leaf:nth-child(7) { top: 55%; left: 6%; transform: rotate(-20deg); }
+        .bamboo-leaf:nth-child(8) { bottom: 25%; right: 6%; transform: rotate(15deg); }
+        /* 祥云装饰 */
+        .cloud {
+            position: absolute;
+            opacity: 0.06;
+            color: var(--palace-gold);
+            font-size: 50px;
+            animation: cloudFloat 25s ease-in-out infinite;
+        }
+        .cloud:nth-child(9) { top: 5%; left: 15%; animation-delay: 0s; }
+        .cloud:nth-child(10) { top: 35%; right: 12%; animation-delay: 8s; }
+        .cloud:nth-child(11) { bottom: 20%; left: 20%; animation-delay: 15s; }
+        /* 落花动画 */
+        .falling-petal {
+            position: absolute;
+            font-size: 16px;
+            opacity: 0;
+            color: #FFB7C5;
+            animation: fall 12s linear infinite;
+        }
+        .falling-petal:nth-child(12) { left: 10%; animation-delay: 0s; }
+        .falling-petal:nth-child(13) { left: 30%; animation-delay: 3s; }
+        .falling-petal:nth-child(14) { left: 50%; animation-delay: 6s; }
+        .falling-petal:nth-child(15) { left: 70%; animation-delay: 9s; }
+        .falling-petal:nth-child(16) { left: 90%; animation-delay: 2s; }
+        @keyframes sway {
+            0%, 100% { transform: rotate(0deg) scale(1); }
+            50% { transform: rotate(10deg) scale(1.1); }
+        }
+        @keyframes cloudFloat {
+            0%, 100% { transform: translateX(0) translateY(0); }
+            50% { transform: translateX(30px) translateY(-10px); }
+        }
+        @keyframes fall {
+            0% { top: -5%; opacity: 0; transform: rotate(0deg) translateX(0); }
+            10% { opacity: 0.6; }
+            90% { opacity: 0.4; }
+            100% { top: 105%; opacity: 0; transform: rotate(360deg) translateX(50px); }
+        }
+        .floating-element {
+            position: fixed;
+            font-size: 100px;
+            opacity: 0.04;
+            color: var(--palace-red);
+            animation: float 20s ease-in-out infinite;
+            pointer-events: none;
+            font-family: 'Noto Serif SC', serif;
+            font-weight: 900;
+            z-index: 0;
+        }
+        .floating-element:nth-child(1) { top: 10%; left: 5%; animation-delay: 0s; }
+        .floating-element:nth-child(2) { top: 60%; right: 5%; animation-delay: 5s; }
+        .floating-element:nth-child(3) { bottom: 10%; left: 10%; animation-delay: 10s; }
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(5deg); }
+        }
+        .container { max-width: 900px; margin: 0 auto; padding: 20px; position: relative; z-index: 1; }
+        header {
+            text-align: center;
+            padding: 50px 20px;
+            position: relative;
+        }
+        .header-line {
+            width: 180px;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, var(--palace-gold-bright), var(--palace-gold), var(--palace-gold-bright), transparent);
+            margin: 0 auto 25px;
+            position: relative;
+        }
+        .header-line::before {
+            content: '◆';
+            position: absolute;
+            left: 50%;
+            top: -12px;
+            transform: translateX(-50%);
+            color: var(--palace-gold-bright);
+            background: var(--palace-cream);
+            padding: 0 10px;
+            font-size: 1.2em;
+            text-shadow: 0 0 10px rgba(212,175,55,0.5);
+        }
+        header h1 {
+            font-family: 'Noto Serif SC', '宋体', 'SimSun', serif;
+            font-size: 3.5em;
+            font-weight: 900;
+            color: var(--palace-red-deep);
+            letter-spacing: 18px;
+            margin-bottom: 15px;
+            text-shadow: 3px 3px 6px rgba(107,0,21,0.3), 0 0 20px rgba(212,175,55,0.2);
+            position: relative;
+            display: inline-block;
+        }
+        .title-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+        }
+        .ginseng-container {
+            display: inline-block;
+            width: 60px;
+            height: 90px;
+            animation: bounce 2s ease-in-out infinite;
+            vertical-align: middle;
+        }
+        .ginseng-container.boy { animation-delay: 0s; }
+        .ginseng-container.girl { animation-delay: 0.3s; }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+        .ginseng-baby {
+            width: 100%;
+            height: 100%;
+        }
+        .subtitle {
+            color: var(--palace-brown);
+            font-size: 1.2em;
+            letter-spacing: 8px;
+            margin-top: 10px;
+            font-weight: 600;
+        }
+        .seal {
+            position: absolute;
+            right: 30px;
+            top: 30px;
+            width: 85px;
+            height: 85px;
+            border: 4px solid var(--palace-red);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transform: rotate(-12deg);
+            opacity: 0.8;
+            background: rgba(255,255,255,0.3);
+            box-shadow: 0 4px 15px rgba(165,0,32,0.2);
+        }
+        .seal-text {
+            writing-mode: vertical-rl;
+            color: var(--palace-red);
+            font-family: 'Noto Serif SC', '宋体', serif;
+            font-size: 1.5em;
+            letter-spacing: 6px;
+            font-weight: 900;
+        }
+        .card {
+            background: linear-gradient(145deg, #FFFFFF 0%, #FFFDF8 50%, #FDF5E8 100%);
+            border-radius: 20px;
+            padding: 40px;
+            margin: 25px 0;
+            box-shadow: 0 25px 80px rgba(165,0,32,0.12), 0 8px 30px rgba(212,175,55,0.1), 0 5px 20px rgba(0,0,0,0.08);
+            border: 2px solid rgba(212,175,55,0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 6px;
+            background: linear-gradient(90deg, var(--palace-red), var(--palace-gold-bright), var(--palace-gold), var(--palace-gold-bright), var(--palace-red));
+        }
+        .corner-decoration {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            opacity: 0.25;
+        }
+        .corner-decoration.top-left { top: 10px; left: 10px; border-top: 3px solid var(--palace-gold); border-left: 3px solid var(--palace-gold); }
+        .corner-decoration.top-right { top: 10px; right: 10px; border-top: 3px solid var(--palace-gold); border-right: 3px solid var(--palace-gold); }
+        .corner-decoration.bottom-left { bottom: 10px; left: 10px; border-bottom: 3px solid var(--palace-gold); border-left: 3px solid var(--palace-gold); }
+        .corner-decoration.bottom-right { bottom: 10px; right: 10px; border-bottom: 3px solid var(--palace-gold); border-right: 3px solid var(--palace-gold); }
+        .step-indicator { display: flex; justify-content: center; align-items: center; margin-bottom: 40px; }
+        .step {
+            width: 58px; height: 58px;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #FFFFFF, #F5F0E6);
+            border: 3px solid var(--palace-gold);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Noto Serif SC', serif;
+            font-weight: 900;
+            font-size: 1.3em;
+            color: var(--palace-brown);
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+        .step.active {
+            background: linear-gradient(135deg, var(--palace-red), var(--palace-red-deep));
+            border-color: var(--palace-gold-bright);
+            color: var(--palace-gold-bright);
+            transform: scale(1.2);
+            box-shadow: 0 8px 30px rgba(165,0,32,0.5), 0 0 20px rgba(212,175,55,0.3);
+        }
+        .step.active::after {
+            content: '';
+            position: absolute;
+            inset: -8px;
+            border: 3px solid var(--palace-gold-bright);
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.6; }
+            50% { transform: scale(1.15); opacity: 0; }
+        }
+        .step.completed {
+            background: linear-gradient(135deg, var(--palace-gold-bright), var(--palace-gold));
+            border-color: var(--palace-gold-bright);
+            color: var(--palace-red-deep);
+        }
+        .step-line { width: 80px; height: 4px; background: linear-gradient(90deg, #e0d5c5, #d5c8b5); position: relative; }
+        .step-line.completed { background: linear-gradient(90deg, var(--palace-gold), var(--palace-gold-bright), var(--palace-gold)); }
+        .section { display: none; animation: fadeSlide 0.6s ease-out; }
+        .section.active { display: block; }
+        @keyframes fadeSlide {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        h2 {
+            color: var(--palace-red-deep);
+            font-family: 'Noto Serif SC', '宋体', serif;
+            font-size: 1.8em;
+            font-weight: 700;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid rgba(212,175,55,0.4);
+            position: relative;
+            letter-spacing: 5px;
+        }
+        h2::after {
+            content: '';
+            position: absolute;
+            bottom: -3px;
+            left: 0;
+            width: 80px;
+            height: 3px;
+            background: linear-gradient(90deg, var(--palace-red), var(--palace-gold));
+        }
+        h3 {
+            color: var(--text-dark);
+            font-size: 1.2em;
+            margin: 25px 0 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+        }
+        h3::before {
+            content: '◆';
+            color: var(--palace-gold-bright);
+            text-shadow: 0 0 5px rgba(212,175,55,0.5);
+        }
+        .form-group { margin: 20px 0; }
+        label {
+            display: block;
+            margin-bottom: 10px;
+            color: var(--text-dark);
+            font-weight: 600;
+            letter-spacing: 2px;
+        }
+        input[type="text"], input[type="number"], select {
+            width: 100%;
+            padding: 15px 20px;
+            border: 2px solid rgba(212,175,55,0.4);
+            border-radius: 12px;
+            font-size: 1em;
+            font-family: inherit;
+            background: linear-gradient(145deg, #FFFFFF, #FDFCF8);
+            transition: all 0.3s;
+            color: var(--text-dark);
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--palace-gold-bright);
+            box-shadow: 0 0 0 4px rgba(212,175,55,0.2), 0 0 15px rgba(212,175,55,0.1);
+        }
+        .radio-group { display: flex; gap: 15px; flex-wrap: wrap; }
+        .radio-option { flex: 1; min-width: 140px; }
+        .radio-option input { display: none; }
+        .radio-option label {
+            display: block;
+            padding: 18px 15px;
+            border: 2px solid rgba(212,175,55,0.4);
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: linear-gradient(145deg, #FFFFFF, #FDFCF8);
+            color: var(--text-dark);
+            font-weight: 500;
+        }
+        .radio-option label:hover { border-color: var(--palace-gold-bright); transform: translateY(-2px); box-shadow: 0 5px 15px rgba(212,175,55,0.2); }
+        .radio-option input:checked + label {
+            border-color: var(--palace-red);
+            background: linear-gradient(135deg, var(--palace-red), var(--palace-red-deep));
+            color: var(--palace-gold-bright);
+            box-shadow: 0 5px 25px rgba(165,0,32,0.4);
+            font-weight: 600;
+        }
+        .question-card {
+            background: linear-gradient(135deg, #FFFFFF 0%, #FDF8F0 100%);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            border: 2px solid rgba(212,175,55,0.25);
+            transition: all 0.3s;
+        }
+        .question-card:hover { transform: translateX(5px); box-shadow: 0 8px 25px rgba(165,0,32,0.08); border-color: rgba(212,175,55,0.4); }
+        .question-card p { margin-bottom: 18px; font-weight: 600; color: var(--text-dark); font-size: 1.1em; }
+        .score-options { display: flex; gap: 10px; }
+        .score-btn {
+            flex: 1;
+            padding: 12px 8px;
+            border: 2px solid rgba(212,175,55,0.4);
+            border-radius: 10px;
+            background: linear-gradient(145deg, #FFFFFF, #FDFCF8);
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: inherit;
+            font-size: 0.95em;
+            color: var(--text-dark);
+            font-weight: 500;
+        }
+        .score-btn:hover { border-color: var(--palace-gold-bright); background: linear-gradient(145deg, #FFFDF8, #FFF8E8); }
+        .score-btn.selected {
+            background: linear-gradient(135deg, var(--palace-gold-bright), var(--palace-gold));
+            border-color: var(--palace-gold-bright);
+            color: var(--palace-red-deep);
+            font-weight: 700;
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(212,175,55,0.4);
+        }
+        .btn {
+            padding: 18px 50px;
+            border: none;
+            border-radius: 30px;
+            font-size: 1.15em;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 10px;
+            letter-spacing: 3px;
+            font-weight: 600;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--palace-red), var(--palace-red-deep));
+            color: var(--palace-gold-bright);
+            box-shadow: 0 8px 30px rgba(165,0,32,0.4);
+        }
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 40px rgba(165,0,32,0.5);
+        }
+        .btn-secondary {
+            background: linear-gradient(135deg, #FDF8F0, #F5EDE0);
+            color: var(--text-dark);
+            border: 2px solid rgba(212,175,55,0.5);
+        }
+        .btn-secondary:hover { background: linear-gradient(135deg, #F5EDE0, #EDE4D3); border-color: var(--palace-gold); }
+        .btn-gold {
+            background: linear-gradient(135deg, var(--palace-gold-bright), var(--palace-gold));
+            color: var(--palace-red-deep);
+            box-shadow: 0 8px 30px rgba(212,175,55,0.4);
+            font-weight: 700;
+        }
+        .btn-group { text-align: center; margin-top: 35px; }
+        .checkbox-group { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 15px;
+            border: 2px solid rgba(212,175,55,0.4);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: linear-gradient(145deg, #FFFFFF, #FDFCF8);
+            text-align: center;
+            color: var(--text-dark);
+            font-weight: 500;
+        }
+        .checkbox-item:hover { border-color: var(--palace-gold-bright); transform: translateY(-2px); box-shadow: 0 5px 15px rgba(212,175,55,0.2); }
+        .checkbox-item.selected {
+            border-color: var(--palace-gold-bright);
+            background: linear-gradient(135deg, rgba(212,175,55,0.2), rgba(212,175,55,0.08));
+            box-shadow: 0 5px 20px rgba(212,175,55,0.3);
+            color: var(--palace-red-deep);
+            font-weight: 600;
+        }
+        .checkbox-item input { display: none; }
+</style>
+</head>
+<body>
+    <!-- 节气背景装饰 -->
+    <div class="season-bg">
+        <!-- 梅花 -->
+        <div class="plum-blossom"></div>
+        <div class="plum-blossom"></div>
+        <div class="plum-blossom"></div>
+        <div class="plum-blossom"></div>
+        <div class="plum-blossom"></div>
+        <!-- 竹叶 -->
+        <div class="bamboo-leaf">🎋</div>
+        <div class="bamboo-leaf">🎋</div>
+        <div class="bamboo-leaf">🎋</div>
+        <!-- 祥云 -->
+        <div class="cloud">☁</div>
+        <div class="cloud">☁</div>
+        <div class="cloud">☁</div>
+        <!-- 落花 -->
+        <div class="falling-petal">🌸</div>
+        <div class="falling-petal">🌸</div>
+        <div class="falling-petal">🌸</div>
+        <div class="falling-petal">🌸</div>
+        <div class="falling-petal">🌸</div>
+    </div>
+
+    <div class="floating-element">福</div>
+    <div class="floating-element">壽</div>
+    <div class="floating-element">康</div>
+
+    <div class="container">
+        <header>
+            <div class="seal"><span class="seal-text">微柔</span></div>
+            <div class="header-line"></div>
+            <div class="title-wrapper">
+                <!-- 男孩人参娃娃 (左边) -->
+                <span class="ginseng-container boy"><svg class="ginseng-baby" viewBox="0 0 80 120" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="boyBodyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#F8E71C"/>
+                            <stop offset="100%" style="stop-color:#F5A623"/>
+                        </linearGradient>
+                        <linearGradient id="boyLeafGrad" x1="0%" y1="100%" x2="0%" y2="0%">
+                            <stop offset="0%" style="stop-color:#1B5E20"/>
+                            <stop offset="100%" style="stop-color:#4CAF50"/>
+                        </linearGradient>
+                    </defs>
+                    <!-- 叶子 -->
+                    <ellipse cx="25" cy="18" rx="8" ry="4" fill="#2E7D32" transform="rotate(-45 25 18)"/>
+                    <ellipse cx="55" cy="18" rx="8" ry="4" fill="#2E7D32" transform="rotate(45 55 18)"/>
+                    <ellipse cx="40" cy="10" rx="5" ry="12" fill="url(#boyLeafGrad)"/>
+                    <!-- 红果 -->
+                    <circle cx="25" cy="5" r="4" fill="#E53935"/>
+                    <circle cx="40" cy="2" r="3" fill="#C62828"/>
+                    <circle cx="55" cy="5" r="4" fill="#E53935"/>
+                    <!-- 头部 -->
+                    <polygon points="40,20 50,28 48,40 40,45 32,40 30,28" fill="url(#boyBodyGrad)"/>
+                    <!-- 男孩眼睛 - 圆眼 -->
+                    <circle cx="35" cy="32" r="3" fill="#333"/>
+                    <circle cx="45" cy="32" r="3" fill="#333"/>
+                    <circle cx="36" cy="31" r="1" fill="#fff"/>
+                    <circle cx="46" cy="31" r="1" fill="#fff"/>
+                    <!-- 男孩嘴巴 - 微笑 -->
+                    <path d="M36,38 Q40,42 44,38" stroke="#333" stroke-width="1.5" fill="none"/>
+                    <!-- 身体 -->
+                    <polygon points="40,45 52,55 50,70 40,75 30,70 28,55" fill="#F5A623"/>
+                    <polygon points="28,55 30,70 22,80 18,65" fill="#E8903C"/>
+                    <polygon points="52,55 50,70 58,80 62,65" fill="#E8903C"/>
+                    <polygon points="40,75 50,70 55,85 40,95 25,85 30,70" fill="#D0021B"/>
+                    <!-- 腿 -->
+                    <polygon points="25,85 30,95 25,115 18,110 20,95" fill="#9C27B0"/>
+                    <polygon points="55,85 50,95 55,115 62,110 60,95" fill="#9C27B0"/>
+                    <polygon points="40,95 45,100 42,115 38,115 35,100" fill="#6A1B9A"/>
+                    <!-- 高光 -->
+                    <polygon points="40,25 45,30 43,38 40,40 37,38 35,30" fill="#FFF59D" opacity="0.3"/>
+                </svg></span>
+
+                <h1>微柔</h1>
+
+                <!-- 女孩人参娃娃 (右边) -->
+                <span class="ginseng-container girl"><svg class="ginseng-baby" viewBox="0 0 80 120" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="girlBodyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#F8E71C"/>
+                            <stop offset="100%" style="stop-color:#F5A623"/>
+                        </linearGradient>
+                        <linearGradient id="girlLeafGrad" x1="0%" y1="100%" x2="0%" y2="0%">
+                            <stop offset="0%" style="stop-color:#1B5E20"/>
+                            <stop offset="100%" style="stop-color:#4CAF50"/>
+                        </linearGradient>
+                    </defs>
+                    <!-- 叶子 -->
+                    <ellipse cx="25" cy="18" rx="8" ry="4" fill="#2E7D32" transform="rotate(-45 25 18)"/>
+                    <ellipse cx="55" cy="18" rx="8" ry="4" fill="#2E7D32" transform="rotate(45 55 18)"/>
+                    <ellipse cx="40" cy="10" rx="5" ry="12" fill="url(#girlLeafGrad)"/>
+                    <!-- 粉色蝴蝶结装饰 -->
+                    <ellipse cx="28" cy="8" rx="8" ry="5" fill="#FF69B4" transform="rotate(-30 28 8)"/>
+                    <ellipse cx="52" cy="8" rx="8" ry="5" fill="#FF69B4" transform="rotate(30 52 8)"/>
+                    <circle cx="40" cy="8" r="4" fill="#FF1493"/>
+                    <!-- 红果 -->
+                    <circle cx="20" cy="3" r="3" fill="#E53935"/>
+                    <circle cx="60" cy="3" r="3" fill="#E53935"/>
+                    <!-- 头部 -->
+                    <polygon points="40,20 50,28 48,40 40,45 32,40 30,28" fill="url(#girlBodyGrad)"/>
+                    <!-- 女孩眼睛 - 弯弯笑眼 -->
+                    <path d="M32,32 Q35,29 38,32" stroke="#333" stroke-width="2" fill="none"/>
+                    <path d="M42,32 Q45,29 48,32" stroke="#333" stroke-width="2" fill="none"/>
+                    <!-- 腮红 -->
+                    <ellipse cx="30" cy="36" rx="4" ry="2" fill="#FFB6C1" opacity="0.6"/>
+                    <ellipse cx="50" cy="36" rx="4" ry="2" fill="#FFB6C1" opacity="0.6"/>
+                    <!-- 女孩嘴巴 - 小嘴 -->
+                    <ellipse cx="40" cy="39" rx="2" ry="1.5" fill="#E91E63"/>
+                    <!-- 身体 -->
+                    <polygon points="40,45 52,55 50,70 40,75 30,70 28,55" fill="#F5A623"/>
+                    <polygon points="28,55 30,70 22,80 18,65" fill="#E8903C"/>
+                    <polygon points="52,55 50,70 58,80 62,65" fill="#E8903C"/>
+                    <polygon points="40,75 50,70 55,85 40,95 25,85 30,70" fill="#D0021B"/>
+                    <!-- 腿 -->
+                    <polygon points="25,85 30,95 25,115 18,110 20,95" fill="#9C27B0"/>
+                    <polygon points="55,85 50,95 55,115 62,110 60,95" fill="#9C27B0"/>
+                    <polygon points="40,95 45,100 42,115 38,115 35,100" fill="#6A1B9A"/>
+                    <!-- 高光 -->
+                    <polygon points="40,25 45,30 43,38 40,40 37,38 35,30" fill="#FFF59D" opacity="0.3"/>
+                </svg></span>
+            </div>
+            <p class="subtitle">— 智能体质检测与养生调理 —</p>
+        </header>
+
+        <div class="card">
+            <div class="corner-decoration top-left"></div>
+            <div class="corner-decoration top-right"></div>
+            <div class="corner-decoration bottom-left"></div>
+            <div class="corner-decoration bottom-right"></div>
+
+            <div class="step-indicator">
+                <div class="step active" id="step1">壹</div>
+                <div class="step-line" id="line1"></div>
+                <div class="step" id="step2">贰</div>
+                <div class="step-line" id="line2"></div>
+                <div class="step" id="step3">叁</div>
+                <div class="step-line" id="line3"></div>
+                <div class="step" id="step4">肆</div>
+            </div>
+
+            <div class="section active" id="section1">
+                <h2>📋 基本信息</h2>
+                <div class="form-group">
+                    <label>您的姓名</label>
+                    <input type="text" id="userName" placeholder="请输入您的姓名">
+                </div>
+                <div class="form-group">
+                    <label>您的性别</label>
+                    <div class="radio-group">
+                        <div class="radio-option">
+                            <input type="radio" name="gender" id="male" value="male">
+                            <label for="male">👨 男</label>
+                        </div>
+                        <div class="radio-option">
+                            <input type="radio" name="gender" id="female" value="female">
+                            <label for="female">👩 女</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>您的年龄</label>
+                    <input type="number" id="userAge" placeholder="请输入年龄" min="1" max="120">
+                </div>
+                <div class="form-group">
+                    <label>身高 (cm)</label>
+                    <input type="number" id="userHeight" placeholder="请输入身高" min="100" max="250">
+                </div>
+                <div class="form-group">
+                    <label>体重 (kg)</label>
+                    <input type="number" id="userWeight" placeholder="请输入体重" min="30" max="200">
+                </div>
+                <div class="form-group">
+                    <label>职业类型</label>
+                    <select id="occupation">
+                        <option value="">请选择您的职业类型</option>
+                        <option value="office">办公室久坐型</option>
+                        <option value="labor">体力劳动型</option>
+                        <option value="mixed">脑力+轻体力型</option>
+                        <option value="student">学生</option>
+                        <option value="retired">退休人员</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>作息规律</label>
+                    <div class="radio-group">
+                        <div class="radio-option">
+                            <input type="radio" name="sleep" id="sleep1" value="regular">
+                            <label for="sleep1">🌙 规律作息</label>
+                        </div>
+                        <div class="radio-option">
+                            <input type="radio" name="sleep" id="sleep2" value="late">
+                            <label for="sleep2">🌃 偶尔熬夜</label>
+                        </div>
+                        <div class="radio-option">
+                            <input type="radio" name="sleep" id="sleep3" value="irregular">
+                            <label for="sleep3">🌑 经常熬夜</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-primary" onclick="nextStep(1)">下一步 →</button>
+                </div>
+            </div>
+
+            <div class="section" id="section2">
+                <h2>🔍 体质测评</h2>
+                <p style="color:#666;margin-bottom:25px;font-style:italic;">请根据您近一年的实际情况，选择最符合的选项</p>
+                <div id="questionContainer"></div>
+                <div class="btn-group">
+                    <button class="btn btn-secondary" onclick="prevStep(2)">← 上一步</button>
+                    <button class="btn btn-primary" onclick="nextStep(2)">下一步 →</button>
+                </div>
+            </div>
+
+            <div class="section" id="section3">
+                <h2>🍽️ 饮食偏好</h2>
+                <h3>喜好口味（可多选）</h3>
+                <div class="checkbox-group" id="tastePrefer">
+                    <div class="checkbox-item" onclick="toggleCheck(this)"><input type="checkbox" value="sour">🍋 酸</div>
+                    <div class="checkbox-item" onclick="toggleCheck(this)"><input type="checkbox" value="sweet">🍯 甜</div>
+                    <div class="checkbox-item" onclick="toggleCheck(this)"><input type="checkbox" value="bitter">🍵 苦</div>
+                    <div class="checkbox-item" onclick="toggleCheck(this)"><input type="checkbox" value="spicy">🌶️ 辣</div>
+                    <div class="checkbox-item" onclick="toggleCheck(this)"><input type="checkbox" value="salty">🧂 咸</div>
+                    <div class="checkbox-item" onclick="toggleCheck(this)"><input type="checkbox" value="light">🥗 清淡</div>
+                </div>
+                <h3>饮食禁忌（可多选）</h3>
+                <div class="checkbox-group" id="foodTaboo">
+                    <div class="checkbox-item" onclick="toggleCheck(this)"><input type="checkbox" value="seafood">🦐 海鲜过敏</div>
+                    <div class="checkbox-item" onclick="toggleCheck(this)"><input type="checkbox" value="lactose">🥛 乳糖不耐</div>
+                    <div class="checkbox-item" onclick="toggleCheck(this)"><input type="checkbox" value="gluten">🌾 麸质过敏</div>
+                    <div class="checkbox-item" onclick="toggleCheck(this)"><input type="checkbox" value="nuts">🥜 坚果过敏</div>
+                    <div class="checkbox-item" onclick="toggleCheck(this)"><input type="checkbox" value="vegetarian">🥬 素食主义</div>
+                    <div class="checkbox-item" onclick="toggleCheck(this)"><input type="checkbox" value="none">✅ 无禁忌</div>
+                </div>
+                <h3>健康困扰（可多选）</h3>
+                <div class="checkbox-group" id="healthIssues">
+                    <div class="checkbox-item" onclick="toggleCheck(this)"><input type="checkbox" value="fatigue">😴 易疲劳</div>
+                    <div class="checkbox-item" onclick="toggleCheck(this)"><input type="checkbox" value="insomnia">🌙 失眠</div>
+                    <div class="checkbox-item" onclick="toggleCheck(this)"><input type="checkbox" value="digestion">🤢 消化不良</div>
+                    <div class="checkbox-item" onclick="toggleCheck(this)"><input type="checkbox" value="cold">🥶 手脚冰凉</div>
+                    <div class="checkbox-item" onclick="toggleCheck(this)"><input type="checkbox" value="acne">😣 皮肤问题</div>
+                    <div class="checkbox-item" onclick="toggleCheck(this)"><input type="checkbox" value="weight">⚖️ 体重管理</div>
+                    <div class="checkbox-item" onclick="toggleCheck(this)"><input type="checkbox" value="immunity">🛡️ 免疫力差</div>
+                    <div class="checkbox-item" onclick="toggleCheck(this)"><input type="checkbox" value="mood">😔 情绪低落</div>
+                </div>
+                <h3>运动习惯</h3>
+                <div class="radio-group">
+                    <div class="radio-option"><input type="radio" name="exercise" id="ex1" value="none"><label for="ex1">几乎不运动</label></div>
+                    <div class="radio-option"><input type="radio" name="exercise" id="ex2" value="light"><label for="ex2">偶尔运动</label></div>
+                    <div class="radio-option"><input type="radio" name="exercise" id="ex3" value="moderate"><label for="ex3">每周2-3次</label></div>
+                    <div class="radio-option"><input type="radio" name="exercise" id="ex4" value="regular"><label for="ex4">规律运动</label></div>
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-secondary" onclick="prevStep(3)">← 上一步</button>
+                    <button class="btn btn-gold" onclick="generateResult()">生成养生方案 🎯</button>
+                </div>
+            </div>
+
+            <div class="section" id="section4">
+                <div id="resultContent"></div>
+                <div class="btn-group">
+                    <button class="btn btn-secondary" onclick="restartTest()">重新测评</button>
+                    <button class="btn btn-primary" onclick="window.print()">打印报告 🖨️</button>
+                </div>
+            </div>
+        </div>
+    </div>
+<style>
+        .result-header {
+            background: linear-gradient(135deg, var(--palace-red), #A50015);
+            color: #fff;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            margin-bottom: 25px;
+            position: relative;
+            overflow: hidden;
+        }
+        .result-header::before {
+            content: '☯';
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 80px;
+            opacity: 0.1;
+        }
+        .result-header h3 { color: #fff; font-size: 1.8em; margin-bottom: 10px; }
+        .constitution-badge {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            padding: 10px 25px;
+            border-radius: 25px;
+            margin: 8px;
+            font-size: 1.1em;
+            backdrop-filter: blur(5px);
+        }
+        .advice-card {
+            background: linear-gradient(135deg, #FDFCFA 0%, #F8F5EE 100%);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            border: 1px solid rgba(201,162,39,0.2);
+            position: relative;
+        }
+        .advice-card::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(180deg, var(--palace-red), var(--palace-gold));
+            border-radius: 4px 0 0 4px;
+        }
+        .advice-card h4 {
+            color: var(--palace-red);
+            font-size: 1.2em;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .food-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+            gap: 10px;
+            margin: 15px 0;
+        }
+        .food-item {
+            padding: 12px 8px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 0.95em;
+            transition: all 0.3s;
+        }
+        .food-item.good {
+            background: linear-gradient(135deg, rgba(76,175,80,0.15), rgba(76,175,80,0.05));
+            border: 1px solid rgba(76,175,80,0.3);
+            color: #2e7d32;
+        }
+        .food-item.bad {
+            background: linear-gradient(135deg, rgba(244,67,54,0.15), rgba(244,67,54,0.05));
+            border: 1px solid rgba(244,67,54,0.3);
+            color: #c62828;
+        }
+        .advice-list { list-style: none; }
+        .advice-list li {
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(201,162,39,0.15);
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        .advice-list li:last-child { border-bottom: none; }
+        .advice-icon {
+            width: 28px;
+            height: 28px;
+            background: linear-gradient(135deg, var(--palace-gold), #E8D48B);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--palace-dark);
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+        .meal-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .meal-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid rgba(201,162,39,0.2);
+            text-align: center;
+        }
+        .meal-card h5 {
+            color: var(--palace-red);
+            margin-bottom: 12px;
+            font-size: 1.1em;
+        }
+        .meal-card ul { list-style: none; text-align: left; }
+        .meal-card li { padding: 6px 0; font-size: 0.95em; color: var(--palace-brown); }
+        .progress-bar {
+            height: 12px;
+            background: #e0d5c5;
+            border-radius: 6px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        .progress-fill {
+            height: 100%;
+            border-radius: 6px;
+            transition: width 1s ease-out;
+        }
+        .tag {
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            margin: 4px;
+        }
+        .tag-feature { background: rgba(201,162,39,0.15); color: var(--palace-brown); border: 1px solid rgba(201,162,39,0.3); }
+        @media (max-width: 768px) {
+            .meal-grid { grid-template-columns: 1fr; }
+            .score-options { flex-wrap: wrap; }
+            .score-btn { min-width: 45%; }
+            header h1 { font-size: 2em; letter-spacing: 6px; }
+            .seal { display: none; }
+        }
+        @media print {
+            .btn, .btn-group, header, .step-indicator, .floating-element { display: none !important; }
+            .card { box-shadow: none; border: 1px solid #ddd; }
+            body::before { display: none; }
+        }
+    </style>
+
+    <script>
+        const questions = [
+            { type: 'pinghe', text: '您精力充沛吗？', reverse: true },
+            { type: 'pinghe', text: '您容易疲乏吗？', reverse: false },
+            { type: 'qixu', text: '您容易气短，呼吸短促吗？' },
+            { type: 'qixu', text: '您容易心慌吗？' },
+            { type: 'qixu', text: '您比别人容易感冒吗？' },
+            { type: 'yangxu', text: '您手脚发凉吗？' },
+            { type: 'yangxu', text: '您胃脘部、背部或腰膝部怕冷吗？' },
+            { type: 'yangxu', text: '您比一般人耐受不了寒冷吗？' },
+            { type: 'yangxu', text: '您吃凉东西会感到不舒服吗？' },
+            { type: 'yinxu', text: '您感到手脚心发热吗？' },
+            { type: 'yinxu', text: '您皮肤或口唇干燥吗？' },
+            { type: 'yinxu', text: '您口唇的颜色比一般人红吗？' },
+            { type: 'tanshi', text: '您感到胸闷或腹部胀满吗？' },
+            { type: 'tanshi', text: '您感到身体沉重不轻松吗？' },
+            { type: 'tanshi', text: '您腹部肥满松软吗？' },
+            { type: 'tanshi', text: '您额头部位油脂分泌多吗？' },
+            { type: 'shire', text: '您面部或鼻部有油腻感吗？' },
+            { type: 'shire', text: '您易生痤疮或疮疖吗？' },
+            { type: 'shire', text: '您感到口苦或嘴里有异味吗？' },
+            { type: 'xueyu', text: '您皮肤常在不知不觉中出现青紫瘀斑吗？' },
+            { type: 'xueyu', text: '您面色晦暗或容易出现褐斑吗？' },
+            { type: 'qiyu', text: '您感到闷闷不乐、情绪低沉吗？' },
+            { type: 'qiyu', text: '您容易精神紧张、焦虑不安吗？' },
+            { type: 'qiyu', text: '您多愁善感、感情脆弱吗？' },
+            { type: 'tebing', text: '您没有感冒时也会打喷嚏吗？' },
+            { type: 'tebing', text: '您容易过敏(药物、食物、花粉等)吗？' }
+        ];
+
+        const constitutionInfo = {
+            pinghe: { name: '平和质', emoji: '😊', color: '#4CAF50', description: '阴阳气血调和，体态适中，面色红润',
+                features: ['体形匀称', '面色润泽', '精力充沛', '睡眠良好'],
+                goodFoods: ['五谷杂粮', '新鲜蔬果', '瘦肉', '鱼类', '豆制品'],
+                badFoods: ['过于油腻', '过于辛辣', '过于寒凉'],
+                exercise: ['各类运动均可', '保持适度运动'],
+                health: ['保持良好作息', '饮食均衡', '心情愉悦'] },
+            qixu: { name: '气虚质', emoji: '😔', color: '#FF9800', description: '元气不足，容易疲乏、气短、自汗',
+                features: ['容易疲劳', '气短懒言', '容易出汗', '容易感冒'],
+                goodFoods: ['黄芪', '党参', '山药', '大枣', '牛肉', '鸡肉', '香菇'],
+                badFoods: ['生冷食物', '油腻食物', '萝卜'],
+                exercise: ['太极拳', '八段锦', '散步'],
+                health: ['避免过度劳累', '注意保暖', '充足睡眠'] },
+            yangxu: { name: '阳虚质', emoji: '🥶', color: '#2196F3', description: '阳气不足，畏寒怕冷、手足不温',
+                features: ['畏寒怕冷', '手脚冰凉', '喜热饮食', '精神不振'],
+                goodFoods: ['羊肉', '韭菜', '生姜', '桂圆', '核桃', '虾'],
+                badFoods: ['生冷瓜果', '冰镇饮料', '苦瓜', '绿豆'],
+                exercise: ['慢跑', '太极拳', '阳光下运动'],
+                health: ['注意保暖', '艾灸关元穴', '泡脚'] },
+            yinxu: { name: '阴虚质', emoji: '🔥', color: '#f44336', description: '阴液亏少，口燥咽干、手足心热',
+                features: ['手足心热', '口干咽燥', '喜冷饮', '面色潮红'],
+                goodFoods: ['银耳', '百合', '枸杞', '鸭肉', '蜂蜜', '梨'],
+                badFoods: ['辛辣食物', '煎炸食物', '羊肉', '韭菜'],
+                exercise: ['游泳', '太极拳', '瑜伽'],
+                health: ['避免熬夜', '保持心情平静', '多喝水'] },
+            tanshi: { name: '痰湿质', emoji: '💧', color: '#795548', description: '痰湿凝聚，形体肥胖、腹部肥满',
+                features: ['形体肥胖', '腹部肥满', '口黏腻', '身重不爽'],
+                goodFoods: ['薏米', '冬瓜', '赤小豆', '白萝卜', '海带', '荷叶'],
+                badFoods: ['肥肉', '甜食', '油炸食品', '糯米'],
+                exercise: ['快走', '慢跑', '游泳'],
+                health: ['控制体重', '少食多餐', '避免潮湿环境'] },
+            shire: { name: '湿热质', emoji: '🌡️', color: '#FF5722', description: '湿热内蕴，面垢油光、口苦口干',
+                features: ['面垢油光', '易生痤疮', '口苦口臭', '大便黏滞'],
+                goodFoods: ['绿豆', '苦瓜', '黄瓜', '冬瓜', '薏米', '绿茶'],
+                badFoods: ['辛辣食物', '油腻食物', '甜食', '酒类'],
+                exercise: ['游泳', '爬山', '中长跑'],
+                health: ['保持皮肤清洁', '避免熬夜', '戒烟限酒'] },
+            xueyu: { name: '血瘀质', emoji: '🩸', color: '#9C27B0', description: '血行不畅，肤色晦暗、容易出现瘀斑',
+                features: ['肤色晦暗', '易有瘀斑', '口唇暗淡', '性情急躁'],
+                goodFoods: ['山楂', '醋', '玫瑰花', '红糖', '黑木耳', '洋葱'],
+                badFoods: ['肥肉', '奶油', '油炸食品'],
+                exercise: ['各种舞蹈', '太极拳', '步行'],
+                health: ['保持心情舒畅', '避免寒冷刺激'] },
+            qiyu: { name: '气郁质', emoji: '😢', color: '#607D8B', description: '气机郁滞，神情抑郁、忧虑脆弱',
+                features: ['情绪低落', '多愁善感', '胸胁胀满', '睡眠不佳'],
+                goodFoods: ['玫瑰花', '佛手', '柑橘', '萝卜', '山楂'],
+                badFoods: ['咖啡', '浓茶', '酒类'],
+                exercise: ['跑步', '登山', '游泳', '球类运动'],
+                health: ['多与人交流', '培养兴趣爱好', '听音乐'] },
+            tebing: { name: '特禀质', emoji: '🤧', color: '#E91E63', description: '先天失常，易过敏、遗传性疾病',
+                features: ['容易过敏', '鼻塞流涕', '皮肤易起疹'],
+                goodFoods: ['糙米', '蔬菜', '水果', '清淡饮食'],
+                badFoods: ['海鲜', '辛辣食物', '已知过敏原'],
+                exercise: ['散步', '太极拳'],
+                health: ['远离过敏原', '保持环境清洁'] }
+        };
+
+        let currentStep = 1;
+        let answers = {};
+
+        function initQuestions() {
+            const container = document.getElementById('questionContainer');
+            let html = '';
+            questions.forEach((q, index) => {
+                html += '<div class="question-card"><p>' + (index + 1) + '. ' + q.text + '</p><div class="score-options">';
+                html += '<button class="score-btn" onclick="selectScore(' + index + ', 1)">1<br>没有</button>';
+                html += '<button class="score-btn" onclick="selectScore(' + index + ', 2)">2<br>很少</button>';
+                html += '<button class="score-btn" onclick="selectScore(' + index + ', 3)">3<br>有时</button>';
+                html += '<button class="score-btn" onclick="selectScore(' + index + ', 4)">4<br>经常</button>';
+                html += '<button class="score-btn" onclick="selectScore(' + index + ', 5)">5<br>总是</button>';
+                html += '</div></div>';
+            });
+            container.innerHTML = html;
+        }
+
+        function selectScore(questionIndex, score) {
+            answers[questionIndex] = score;
+            const card = document.querySelectorAll('.question-card')[questionIndex];
+            const btns = card.querySelectorAll('.score-btn');
+            btns.forEach((btn, i) => btn.classList.toggle('selected', i === score - 1));
+        }
+
+        function toggleCheck(element) {
+            element.classList.toggle('selected');
+            element.querySelector('input').checked = !element.querySelector('input').checked;
+        }
+
+        function updateSteps(step) {
+            for (let i = 1; i <= 4; i++) {
+                const stepEl = document.getElementById('step' + i);
+                const lineEl = document.getElementById('line' + (i - 1));
+                stepEl.classList.remove('active', 'completed');
+                if (i < step) { stepEl.classList.add('completed'); if (lineEl) lineEl.classList.add('completed'); }
+                else if (i === step) { stepEl.classList.add('active'); }
+            }
+        }
+
+        function nextStep(current) {
+            if (current === 1) {
+                const name = document.getElementById('userName').value;
+                const gender = document.querySelector('input[name="gender"]:checked');
+                if (!name || !gender) { alert('请填写完整的基本信息'); return; }
+            }
+            if (current === 2 && Object.keys(answers).length < questions.length * 0.7) {
+                alert('请至少完成70%的问题'); return;
+            }
+            document.getElementById('section' + current).classList.remove('active');
+            document.getElementById('section' + (current + 1)).classList.add('active');
+            currentStep = current + 1;
+            updateSteps(currentStep);
+            window.scrollTo(0, 0);
+        }
+
+        function prevStep(current) {
+            document.getElementById('section' + current).classList.remove('active');
+            document.getElementById('section' + (current - 1)).classList.add('active');
+            currentStep = current - 1;
+            updateSteps(currentStep);
+        }
+
+        function calculateConstitution() {
+            const scores = { pinghe: [], qixu: [], yangxu: [], yinxu: [], tanshi: [], shire: [], xueyu: [], qiyu: [], tebing: [] };
+            questions.forEach((q, index) => {
+                let score = answers[index] || 3;
+                if (q.reverse) score = 6 - score;
+                scores[q.type].push(score);
+            });
+            const results = {};
+            for (let type in scores) {
+                const arr = scores[type];
+                if (arr.length > 0) {
+                    const sum = arr.reduce((a, b) => a + b, 0);
+                    results[type] = ((sum - arr.length) / (arr.length * 4)) * 100;
+                }
+            }
+            return results;
+        }
+
+        function generateResult() {
+            const name = document.getElementById('userName').value;
+            const height = parseFloat(document.getElementById('userHeight').value) / 100;
+            const weight = parseFloat(document.getElementById('userWeight').value);
+            const bmi = (weight / (height * height)).toFixed(1);
+            let bmiStatus = bmi < 18.5 ? '偏瘦' : bmi < 24 ? '正常' : bmi < 28 ? '偏胖' : '肥胖';
+
+            const constitutionScores = calculateConstitution();
+            const sorted = Object.entries(constitutionScores).sort((a, b) => b[1] - a[1]);
+            let mainTypes = sorted.filter(([type, score]) => score >= 35).slice(0, 3);
+            if (mainTypes.length === 0) mainTypes.push(['pinghe', 60]);
+
+            let html = '<div class="result-header"><h3>🏥 ' + name + ' 的养生报告</h3>';
+            html += '<p style="margin:10px 0;">BMI指数：<strong>' + bmi + '</strong> | 体重状态：' + bmiStatus + '</p>';
+            html += '<p style="margin-top:15px;">主要体质类型：</p>';
+            mainTypes.forEach(([type, score]) => {
+                const info = constitutionInfo[type];
+                html += '<span class="constitution-badge">' + info.emoji + ' ' + info.name + ' (' + score.toFixed(0) + '%)</span>';
+            });
+            html += '</div>';
+
+            mainTypes.forEach(([type, score]) => {
+                const info = constitutionInfo[type];
+                html += '<div class="advice-card"><h4>' + info.emoji + ' ' + info.name + '特征分析</h4>';
+                html += '<p style="color:#666;margin-bottom:15px;">' + info.description + '</p>';
+                html += '<div class="progress-bar"><div class="progress-fill" style="width:' + score + '%;background:' + info.color + '"></div></div>';
+                html += '<p style="margin-top:15px;"><strong>主要表现：</strong></p><div style="margin-top:8px;">';
+                info.features.forEach(f => { html += '<span class="tag tag-feature">' + f + '</span>'; });
+                html += '</div></div>';
+            });
+
+            let goodFoods = new Set(), badFoods = new Set();
+            mainTypes.forEach(([type]) => {
+                constitutionInfo[type].goodFoods.forEach(f => goodFoods.add(f));
+                constitutionInfo[type].badFoods.forEach(f => badFoods.add(f));
+            });
+
+            html += '<div class="advice-card"><h4>🍽️ 饮食调理方案</h4>';
+            html += '<p><strong>✅ 推荐食物：</strong></p><div class="food-grid">';
+            [...goodFoods].slice(0, 10).forEach(f => { html += '<div class="food-item good">' + f + '</div>'; });
+            html += '</div><p style="margin-top:20px;"><strong>❌ 少吃或避免：</strong></p><div class="food-grid">';
+            [...badFoods].slice(0, 8).forEach(f => { html += '<div class="food-item bad">' + f + '</div>'; });
+            html += '</div></div>';
+
+            const mainType = mainTypes[0][0];
+            const weekMeals = {
+                yangxu: [
+                    {day:'周一', b:'小米粥+煮鸡蛋+西兰花', l:'羊肉萝卜汤+韭菜虾仁+糙米饭', d:'山药排骨汤+清炒菠菜+杂粮馒头'},
+                    {day:'周二', b:'红枣桂圆粥+蒸蛋+生菜', l:'黄芪鸡汤+香菇青菜+紫米饭', d:'核桃芝麻糊+凉拌黄瓜+全麦面包'},
+                    {day:'周三', b:'姜丝蛋炒饭+番茄汤', l:'牛肉炖土豆+蒜蓉油麦菜+米饭', d:'小米南瓜粥+清炒豆苗+花卷'},
+                    {day:'周四', b:'燕麦粥+荷包蛋+炒青菜', l:'羊肉汤面+凉拌木耳', d:'红枣银耳羹+蒸茄子+玉米'},
+                    {day:'周五', b:'黑米粥+茶叶蛋+西蓝花', l:'韭菜炒蛋+番茄牛腩+米饭', d:'山药莲子粥+白灼菜心+红薯'},
+                    {day:'周六', b:'桂圆红枣茶+全麦三明治', l:'当归生姜羊肉汤+清炒时蔬+馒头', d:'小米粥+蒸南瓜+凉拌豆腐'},
+                    {day:'周日', b:'核桃芝麻糊+煎蛋+沙拉', l:'板栗鸡汤+蒜蓉西兰花+杂粮饭', d:'红糖姜茶+清蒸鱼+蔬菜粥'}
+                ],
+                yinxu: [
+                    {day:'周一', b:'银耳莲子羹+蒸蛋+黄瓜', l:'鸭肉冬瓜汤+清炒芹菜+米饭', d:'百合粥+凉拌海带+全麦馒头'},
+                    {day:'周二', b:'燕麦牛奶+水煮蛋+生菜', l:'番茄鱼片汤+蒜蓉菠菜+糙米饭', d:'绿豆汤+白灼虾+玉米'},
+                    {day:'周三', b:'小米绿豆粥+蒸蛋+西蓝花', l:'冬瓜排骨汤+清炒苦瓜+米饭', d:'雪梨银耳汤+清蒸豆腐+杂粮'},
+                    {day:'周四', b:'黑芝麻糊+鸡蛋+凉拌菜', l:'海带豆腐汤+白灼菜心+紫米饭', d:'莲子百合粥+清蒸鲈鱼+红薯'},
+                    {day:'周五', b:'燕麦粥+荷包蛋+番茄', l:'鸭血粉丝汤+清炒油麦菜+米饭', d:'枸杞菊花茶+凉拌木耳+馒头'},
+                    {day:'周六', b:'牛奶麦片+煮蛋+沙拉', l:'冬瓜虾仁汤+蒜蓉空心菜+杂粮饭', d:'绿豆百合粥+清蒸蛋+花卷'},
+                    {day:'周日', b:'银耳雪梨羹+蒸蛋+黄瓜', l:'番茄豆腐汤+清炒芦笋+米饭', d:'莲藕排骨汤+凉拌豆芽+玉米'}
+                ],
+                qixu: [
+                    {day:'周一', b:'黄芪党参粥+鸡蛋+青菜', l:'山药排骨汤+香菇青菜+米饭', d:'小米粥+蒸南瓜+蒸蛋'},
+                    {day:'周二', b:'红枣小米粥+煮蛋+西蓝花', l:'鸡汤面+清炒时蔬', d:'山药莲子羹+凉拌菠菜+杂粮馒头'},
+                    {day:'周三', b:'燕麦牛奶+荷包蛋+番茄', l:'牛肉萝卜汤+蒜蓉油麦菜+糙米饭', d:'南瓜小米粥+清蒸鱼+花卷'},
+                    {day:'周四', b:'八宝粥+蒸蛋+生菜', l:'党参黄芪鸡汤+清炒豆苗+米饭', d:'红枣银耳羹+蒸茄子+玉米'},
+                    {day:'周五', b:'黑米粥+茶叶蛋+凉拌菜', l:'山药炖鸡+白灼菜心+紫米饭', d:'桂圆红枣茶+清蒸豆腐+红薯'},
+                    {day:'周六', b:'小米南瓜粥+煎蛋+沙拉', l:'黄芪牛肉汤+香菇青菜+杂粮饭', d:'莲子百合粥+凉拌黄瓜+馒头'},
+                    {day:'周日', b:'核桃芝麻糊+蒸蛋+西蓝花', l:'人参鸡汤+蒜蓉西兰花+米饭', d:'山药排骨粥+清炒芦笋+花卷'}
+                ],
+                tanshi: [
+                    {day:'周一', b:'薏米红豆粥+蒸蛋+黄瓜', l:'冬瓜海带汤+清蒸鱼+糙米饭', d:'荷叶茶+凉拌木耳+玉米'},
+                    {day:'周二', b:'燕麦粥+水煮蛋+生菜', l:'冬瓜虾仁汤+蒜蓉菠菜+米饭', d:'薏米绿豆汤+清蒸豆腐+红薯'},
+                    {day:'周三', b:'小米粥+荷包蛋+西蓝花', l:'海带豆腐汤+清炒芹菜+杂粮饭', d:'陈皮普洱茶+白灼虾+花卷'},
+                    {day:'周四', b:'红豆薏米糊+蒸蛋+番茄', l:'萝卜排骨汤+清炒苦瓜+糙米饭', d:'山楂荷叶茶+凉拌海带+馒头'},
+                    {day:'周五', b:'燕麦牛奶+煮蛋+凉拌菜', l:'冬瓜鸭肉汤+蒜蓉油麦菜+紫米饭', d:'薏米粥+清蒸鲈鱼+玉米'},
+                    {day:'周六', b:'茯苓薏米粥+茶叶蛋+沙拉', l:'海带绿豆汤+白灼菜心+杂粮饭', d:'荷叶决明茶+凉拌豆芽+红薯'},
+                    {day:'周日', b:'红豆小米粥+蒸蛋+黄瓜', l:'冬瓜薏米汤+清炒时蔬+米饭', d:'陈皮山楂茶+清蒸豆腐+花卷'}
+                ],
+                pinghe: [
+                    {day:'周一', b:'杂粮粥+煮蛋+西蓝花', l:'番茄牛肉汤+清炒时蔬+米饭', d:'蔬菜汤+清蒸鱼+杂粮馒头'},
+                    {day:'周二', b:'燕麦牛奶+荷包蛋+生菜', l:'排骨莲藕汤+蒜蓉菠菜+糙米饭', d:'小米粥+凉拌豆腐+玉米'},
+                    {day:'周三', b:'小米粥+蒸蛋+番茄', l:'鸡汤面+清炒油麦菜', d:'银耳汤+白灼虾+花卷'},
+                    {day:'周四', b:'黑米粥+茶叶蛋+凉拌菜', l:'冬瓜排骨汤+香菇青菜+紫米饭', d:'南瓜粥+清蒸蛋+红薯'},
+                    {day:'周五', b:'燕麦粥+煎蛋+黄瓜', l:'番茄鱼片汤+蒜蓉西兰花+米饭', d:'红枣银耳羹+凉拌木耳+馒头'},
+                    {day:'周六', b:'核桃芝麻糊+蒸蛋+沙拉', l:'山药排骨汤+清炒芦笋+杂粮饭', d:'绿豆汤+清蒸鲈鱼+玉米'},
+                    {day:'周日', b:'八宝粥+荷包蛋+西蓝花', l:'牛肉萝卜汤+白灼菜心+米饭', d:'莲子百合粥+凉拌豆芽+花卷'}
+                ]
+            };
+            const teaRecommend = {
+                yangxu: [{name:'桂圆红枣茶', desc:'温补气血，驱寒暖身'}, {name:'姜枣茶', desc:'温中散寒，补益脾胃'}, {name:'黄芪枸杞茶', desc:'补气固表，增强体质'}],
+                yinxu: [{name:'枸杞菊花茶', desc:'清肝明目，滋阴降火'}, {name:'百合银耳茶', desc:'润肺养阴，清心安神'}, {name:'麦冬石斛茶', desc:'养阴生津，润燥清热'}],
+                qixu: [{name:'黄芪党参茶', desc:'补中益气，健脾养胃'}, {name:'人参红枣茶', desc:'大补元气，安神益智'}, {name:'山药茯苓茶', desc:'健脾益气，祛湿化痰'}],
+                tanshi: [{name:'荷叶决明茶', desc:'清热利湿，降脂减肥'}, {name:'陈皮普洱茶', desc:'理气健脾，消食化痰'}, {name:'薏米茯苓茶', desc:'健脾祛湿，利水消肿'}],
+                pinghe: [{name:'枸杞菊花茶', desc:'清肝明目，调理平衡'}, {name:'玫瑰花茶', desc:'疏肝理气，美容养颜'}, {name:'绿茶', desc:'清热解毒，提神醒脑'}]
+            };
+            const weekMeal = weekMeals[mainType] || weekMeals.pinghe;
+            const teas = teaRecommend[mainType] || teaRecommend.pinghe;
+
+            html += '<div class="advice-card"><h4>📅 七日食谱 (211法则：2份蔬菜+1份蛋白+1份主食)</h4>';
+            html += '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:0.9em;">';
+            html += '<tr style="background:linear-gradient(135deg,var(--palace-red),var(--palace-red-deep));color:#fff;"><th style="padding:12px;border:1px solid var(--palace-gold);">日期</th><th style="padding:12px;border:1px solid var(--palace-gold);">🌅 早餐</th><th style="padding:12px;border:1px solid var(--palace-gold);">☀️ 午餐</th><th style="padding:12px;border:1px solid var(--palace-gold);">🌙 晚餐</th></tr>';
+            weekMeal.forEach((m,i) => {
+                const bg = i%2===0 ? '#FFFDF8' : '#FDF8F0';
+                html += '<tr style="background:'+bg+';"><td style="padding:10px;border:1px solid #e0d5c5;font-weight:600;color:var(--palace-red);">'+m.day+'</td><td style="padding:10px;border:1px solid #e0d5c5;">'+m.b+'</td><td style="padding:10px;border:1px solid #e0d5c5;">'+m.l+'</td><td style="padding:10px;border:1px solid #e0d5c5;">'+m.d+'</td></tr>';
+            });
+            html += '</table></div></div>';
+
+            html += '<div class="advice-card"><h4>🍵 养生茶推荐</h4><div class="meal-grid">';
+            teas.forEach(t => {
+                html += '<div class="meal-card" style="text-align:center;"><h5 style="color:var(--palace-red);">'+t.name+'</h5><p style="font-size:0.9em;color:#666;margin-top:8px;">'+t.desc+'</p></div>';
+            });
+            html += '</div><p style="margin-top:15px;font-size:0.85em;color:#888;">💡 建议：每日选择1-2款养生茶，上午或下午饮用，避免空腹或睡前饮用。</p></div>';
+
+            let exercises = new Set(), healthTips = new Set();
+            mainTypes.forEach(([type]) => {
+                constitutionInfo[type].exercise.forEach(e => exercises.add(e));
+                constitutionInfo[type].health.forEach(h => healthTips.add(h));
+            });
+
+            html += '<div class="advice-card"><h4>🏃 运动保健建议</h4><ul class="advice-list">';
+            html += '<li><div class="advice-icon">🏃</div><div><strong>推荐运动：</strong>' + [...exercises].join('、') + '</div></li>';
+            html += '<li><div class="advice-icon">⏰</div><div><strong>最佳时间：</strong>上午9-11点或下午4-6点</div></li>';
+            html += '<li><div class="advice-icon">💡</div><div><strong>注意事项：</strong>运动前热身，运动后拉伸</div></li>';
+            html += '</ul></div>';
+
+            html += '<div class="advice-card"><h4>💊 养生调理建议</h4><ul class="advice-list">';
+            [...healthTips].forEach(tip => { html += '<li><div class="advice-icon">✓</div><div>' + tip + '</div></li>'; });
+            html += '</ul></div>';
+
+            html += '<div class="advice-card" style="border-left-color:#f44336;"><h4 style="color:#c62828;">⚠️ 温馨提示</h4><ul class="advice-list">';
+            html += '<li><div class="advice-icon" style="background:#f44336;color:#fff;">!</div><div>本报告仅供参考，不能替代专业医疗诊断</div></li>';
+            html += '<li><div class="advice-icon" style="background:#f44336;color:#fff;">!</div><div>如有严重不适，请及时就医</div></li>';
+            html += '<li><div class="advice-icon" style="background:#f44336;color:#fff;">!</div><div>饮食调理需要长期坚持，循序渐进</div></li>';
+            html += '</ul></div>';
+
+            document.getElementById('resultContent').innerHTML = html;
+            nextStep(3);
+        }
+
+        function restartTest() {
+            answers = {};
+            currentStep = 1;
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.getElementById('section1').classList.add('active');
+            updateSteps(1);
+            document.querySelectorAll('.score-btn').forEach(btn => btn.classList.remove('selected'));
+            document.querySelectorAll('.checkbox-item').forEach(item => {
+                item.classList.remove('selected');
+                item.querySelector('input').checked = false;
+            });
+            window.scrollTo(0, 0);
+        }
+
+        initQuestions();
+    </script>
+</body>
+</html>
